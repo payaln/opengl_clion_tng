@@ -17,6 +17,8 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/glm/libs)
 #glew - x32
 #glfw - x32
 
-add_executable(opengl_clion_tng main.cpp)
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/common/*.h ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cpp)
 
-target_link_libraries(opengl_clion_tng glfw3 libglew32 ${OPENGL_LIBRARIES})
+add_executable(opengl_clion_tng main.cpp ${SOURCES})
+
+target_link_libraries(opengl_clion_tng glfw3 glew32 ${OPENGL_LIBRARIES})
