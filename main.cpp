@@ -7,6 +7,9 @@
 
 #include "common/shader.h"
 #include "common/loadDDS.h"
+#include "common/controls.h"
+#include "common/CustomObjLoader.h"
+#include "common/VBOIndexer.h"
 
 GLFWwindow* window;
 
@@ -45,117 +48,94 @@ int main() {
 
     GLuint programID = LoadShaders("shaders/VertexShader.vertexshader", "shaders/FragmentShader.fragmentshader");
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+    GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
+    GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
 
-    mat4 Projection = perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-    mat4 View = lookAt(
-            glm::vec3(-4, 3, -3), // Камера находится в мировых координатах (4,3,3)
-            glm::vec3(0, 0, 0), // И направлена в начало координат
-            glm::vec3(0, 1, 0)  // "Голова" находится сверху
-    );
-    mat4 Model = mat4(1.0f);
-    mat4 MVP = Projection * View * Model;
+//    mat4 Projection = perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+//    mat4 View = lookAt(
+//            glm::vec3(-4, 3, -3), // Камера находится в мировых координатах (4,3,3)
+//            glm::vec3(0, 0, 0), // И направлена в начало координат
+//            glm::vec3(0, 1, 0)  // "Голова" находится сверху
+//    );
+//    mat4 Model = mat4(1.0f);
+//    mat4 MVP = Projection * View * Model;
 
-    GLuint Texture = loadDDS("uvtemplate.DDS");
-    GLuint TextureID = glGetUniformLocation(programID, "texSampler");
+    GLuint Texture = loadDDS("uvmap.DDS");
+    GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
 
-    static const GLfloat g_vertex_buffer_data[] = {
-            -1.0f,-1.0f,-1.0f,
-            -1.0f,-1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f,-1.0f,
-            -1.0f,-1.0f,-1.0f,
-            -1.0f, 1.0f,-1.0f,
-            1.0f,-1.0f, 1.0f,
-            -1.0f,-1.0f,-1.0f,
-            1.0f,-1.0f,-1.0f,
-            1.0f, 1.0f,-1.0f,
-            1.0f,-1.0f,-1.0f,
-            -1.0f,-1.0f,-1.0f,
-            -1.0f,-1.0f,-1.0f,
-            -1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f,-1.0f,
-            1.0f,-1.0f, 1.0f,
-            -1.0f,-1.0f, 1.0f,
-            -1.0f,-1.0f,-1.0f,
-            -1.0f, 1.0f, 1.0f,
-            -1.0f,-1.0f, 1.0f,
-            1.0f,-1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f,-1.0f,-1.0f,
-            1.0f, 1.0f,-1.0f,
-            1.0f,-1.0f,-1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f,-1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f,-1.0f,
-            -1.0f, 1.0f,-1.0f,
-            1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f,-1.0f,
-            -1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f,
-            1.0f,-1.0f, 1.0f
-    };
+    GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
-    static const GLfloat g_uv_buffer_data[] = {
-            0.000059f, 0.000004f,
-            0.000103f, 0.336048f,
-            0.335973f, 0.335903f,
-            1.000023f, 0.000013f,
-            0.667979f, 0.335851f,
-            0.999958f, 0.336064f,
-            0.667979f, 0.335851f,
-            0.336024f, 0.671877f,
-            0.667969f, 0.671889f,
-            1.000023f, 0.000013f,
-            0.668104f, 0.000013f,
-            0.667979f, 0.335851f,
-            0.000059f, 0.000004f,
-            0.335973f, 0.335903f,
-            0.336098f, 0.000071f,
-            0.667979f, 0.335851f,
-            0.335973f, 0.335903f,
-            0.336024f, 0.671877f,
-            1.000004f, 0.671847f,
-            0.999958f, 0.336064f,
-            0.667979f, 0.335851f,
-            0.668104f, 0.000013f,
-            0.335973f, 0.335903f,
-            0.667979f, 0.335851f,
-            0.335973f, 0.335903f,
-            0.668104f, 0.000013f,
-            0.336098f, 0.000071f,
-            0.000103f, 0.336048f,
-            0.000004f, 0.671870f,
-            0.336024f, 0.671877f,
-            0.000103f, 0.336048f,
-            0.336024f, 0.671877f,
-            0.335973f, 0.335903f,
-            0.667969f, 0.671889f,
-            1.000004f, 0.671847f,
-            0.667979f, 0.335851f
-    };
+
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec2> uvs;
+    std::vector<glm::vec3> normals; // Won't be used at the moment.
+    bool res = loadOBJ("cube.obj", vertices, uvs, normals);
+
+    std::vector<unsigned short> indices;
+    std::vector<glm::vec3> indexed_vertices;
+    std::vector<glm::vec2> indexed_uvs;
+    std::vector<glm::vec3> indexed_normals;
+    indexVBO(vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals);
 
     GLuint vertexbuffer;
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof(glm::vec3), &indexed_vertices[0], GL_STATIC_DRAW);
 
     GLuint uvbuffer;
     glGenBuffers(1, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
+
+    GLuint normalbuffer;
+    glGenBuffers(1, &normalbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+    glBufferData(GL_ARRAY_BUFFER, indexed_normals.size() * sizeof(glm::vec3), &indexed_normals[0], GL_STATIC_DRAW);
+
+    GLuint elementbuffer;
+    glGenBuffers(1, &elementbuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0] , GL_STATIC_DRAW);
 
     glClearColor(0.4f, 0.5f, 0.4f, 0.5f);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     glDepthFunc(GL_LESS);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwPollEvents();
+
+    Controls contrl(window);
+
+
+    double lastTime = glfwGetTime();
+    int nbFrames = 0;
     do {
+
+        double currentTime = glfwGetTime();
+        nbFrames++;
+        if ( currentTime - lastTime >= 1.0 ){
+            printf("%f ms/frame\n", 1000.0/double(nbFrames));
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        contrl.computeMatricesFromInputs();
+        glm::mat4 ProjectionMatrix = contrl.getProjectionMatrix();
+        glm::mat4 ViewMatrix = contrl.getViewMatrix();
+        glm::mat4 ModelMatrix = glm::mat4(1.0);
+        glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
         glUseProgram(programID);
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+        glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+        glm::vec3 lightPos = glm::vec3(4,4,4);
+        glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
@@ -183,10 +163,32 @@ int main() {
                 (void*)0                          // Смещение
         );
 
-        glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+        glVertexAttribPointer(
+                2,                                // attribute
+                3,                                // size
+                GL_FLOAT,                         // type
+                GL_FALSE,                         // normalized?
+                0,                                // stride
+                (void*)0                          // array buffer offset
+        );
+
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+        glDrawElements(
+                GL_TRIANGLES,      // mode
+                indices.size(),    // count
+                GL_UNSIGNED_SHORT,   // type
+                (void*)0           // element array buffer offset
+        );
+
+//        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
